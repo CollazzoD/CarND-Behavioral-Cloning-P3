@@ -1,10 +1,7 @@
 import pandas as pd
-import numpy as np
-import tensorflow as tf
-from tensorflow import keras
-from tensorflow.keras import layers
-
-from image_utils import img_shape
+from keras.models import Sequential, Model
+from keras.layers import Flatten, Dense, Lambda, Conv2D, Cropping2D
+from keras.layers.pooling import MaxPooling2D
 
 learning_rate = 0.0001
 epochs = 20
@@ -29,6 +26,28 @@ def get_images_and_steerings():
     samples.extend(center_samples, left_samples, right_samples)
 
     return samples
+
+# Creates NVIDIA Model 
+def NVIDIA_Model():
+    model = Sequential()
+    # Normalize data
+    model.add(Lambda(lambda x: (x / 255.0) - 0.5, input_shape=(160,320,3)))
+    # Crops images
+    model.add(Cropping2D(cropping=((50,20), (0,0))))
+
+    # Add NVIDIA Layers
+    model.add(Conv2D(24, (5, 5), strides=(2, 2), activation="relu"))
+    model.add(Conv2D(36, (5, 5), strides=(2, 2), activation="relu"))
+    model.add(Conv2D(48, (5, 5), strides=(2, 2), activation="relu"))
+    model.add(Conv2D(64, (3, 3), activation="relu"))
+    model.add(Conv2D(64, (3, 3), activation="relu"))
+    model.add(Flatten())
+    model.add(Dense(100))
+    model.add(Dense(50))
+    model.add(Dense(10))
+    model.add(Dense(1))
+    
+    return model
 
 # Code taken from course's video
 images = []
