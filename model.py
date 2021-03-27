@@ -1,10 +1,10 @@
 import pandas as pd
+import sklearn
+import cv2
 from keras.models import Sequential, Model
 from keras.layers import Flatten, Dense, Lambda, Conv2D, Cropping2D
 from keras.layers.pooling import MaxPooling2D
-
-learning_rate = 0.0001
-epochs = 20
+import matplotlib.pyplot as plt
 
 # This function opens the csv file containing images path and steerings,
 # applies correction for left and right images steerings and return a list
@@ -14,7 +14,10 @@ def get_images_and_steerings():
     DATA_FILEPATH = './data'
     CSV_FILENAME = 'driving_log.csv'
     STEERING_CORRECTION = 0.2
-    df_img = pd.read_csv(f'{DATA_FILEPATH}/{CSV_FILENAME}')
+    df_img = pd.read_csv(DATA_FILEPATH + '/' + CSV_FILENAME)
+    df_img['center'] = DATA_FILEPATH + '/' + df_img['center'].str.strip()
+    df_img['left'] = DATA_FILEPATH + '/' + df_img['left'].str.strip()
+    df_img['right'] = DATA_FILEPATH + '/' + df_img['right'].str.strip()
     df_img['left_steering'] = df_img['steering'] + STEERING_CORRECTION
     df_img['right_steering'] = df_img['steering'] - STEERING_CORRECTION
 
@@ -23,10 +26,13 @@ def get_images_and_steerings():
     left_samples = df_img[['left', 'left_steering']].rename(columns = {'left':'image', 'left_steering':'steering'}).to_dict('records')
     right_samples = df_img[['right', 'right_steering']].rename(columns = {'right':'image', 'right_steering':'steering'}).to_dict('records')
 
-    samples.extend(center_samples, left_samples, right_samples)
+    samples.extend(center_samples)
+    samples.extend(left_samples)
+    samples.extend(right_samples)
 
     return samples
 
+# Creates NVIDIA Model 
 # Creates NVIDIA Model 
 def NVIDIA_Model():
     model = Sequential()
@@ -49,61 +55,80 @@ def NVIDIA_Model():
     
     return model
 
-# Code taken from course's video
-images = []
-measurements = []
-csv_filepath = '../data/driving_log.csv'
-with open(csv_filepath) as f:
-    reader = csv.reader(f)
-    for row in reader:
-        steering_center = float(row[3])
+# Generator used to improve memory efficiency while training the model
+def generator(samples, batch_size = 32):
+    num_samples = len(samples)
+    while 1: # Loop forever so the generator never terminates
+        sklearn.utils.shuffle(samples)
+        for offset in range(0, num_samples, batch_size):
+            batch_samples = samples[offset:offset+batch_size]
 
-        # # create adjusted steering measurements for the side camera images
-        # correction = 0.2 # this is a parameter to tune
-        # steering_left = steering_center + correction
-        # steering_right = steering_center - correction
+            images = []
+            steerings = []
+            for batch_sample in batch_samples:
+                img_path = batch_sample['image']
+                image = cv2.imread(img_path)
+                steering = float(batch_sample['steering'])
+                images.append(image)
+                steerings.append(steering)
 
-        # read in images from center, left and right cameras
-        path = '../data/IMG/' # fill in the path to your training IMG directory
-        img_center = process_image(np.asarray(Image.open(path + row[0])))
-        img_left = process_image(np.asarray(Image.open(path + row[1])))
-        img_right = process_image(np.asarray(Image.open(path + row[2])))
+                # Flip the image in order to augment the dataset
+                images.append(cv2.flip(image,1))
+                steerings.append(steering * -1.0)
 
-        # add images and angles to data set
-        car_images.extend(img_center, img_left, img_right)
-        steering_angles.extend(steering_center, steering_left, steering_right)
+            X_train = np.array(images)
+            y_train = np.array(steerings)
+            yield sklearn.utils.shuffle(X_train, y_train)
 
+if __name__ == '__main__':
+    # Define some constant
+    BATCH_SIZE = 32
+    N_EPOCHS = 3
 
-for line in lines:
-    for i in range(3):
-        source_path = line[i]
-        filename = source_path.split('/')[-1]
-        current_path =  + filename
-        image = cv2.imread(current_path)
-        images.append(image)
-        measurement = float(line[3])
-        measurements.append(measurement)
+    samples = get_images_and_steerings()
 
-# Flip the images in order to augment dataset
-augmented_images, augmented_measurements = [], []
-for image, measurement in zip(images, measurements):
-    augmented_images.append(image)
-    augmented_measurements.append(measurement
-    augmented_images.append(cv2.flip(image, 1))
-    augmented_measurements.append(measurement * -1.0)
+    print("Number of images (center + left + right) ", len(samples))
+    print("Number of images used to train the network (center + left + right) * 2 (flipping)", len(samples) * 2)
 
-X_train = np.array(images)
-y_train = np.array(measurements)
+    # Split all samples in train and validation sets
+    train_samples, validation_samples = train_test_split(samples, test_size = 0.2)
 
-model = Sequential()
-model.add(Lambda(lambda x: x / 255.0 - 0.5, input_shape(160, 320, 3)))
-model.add(Flatten())
-model.add(Dense(1))
+    print("Number of train samples ", len(train_samples))
+    print("Number of validation samples ", len(validation_samples))
 
-model.compile(loss='mse', optimizer='adam')
-model.fit(X_train, y_train, validation_split=0.2, shuffle=True, nb_epoch=2)
+    # Define the train generator and the validation generator in order to
+    # ease memory occupation
+    train_generator = generator(train_samples, batch_size = BATCH_SIZE)
+    validation_generator = generator(validation_samples, batch_size = BATCH_SIZE)
 
-model.save('model.h5')
+    # Define the model
+    model = NVIDIA_Model()
 
+    # Compile the model
+    model.compile(loss = 'mse', optimizer = 'adam')
 
-# End of code taken from course's video
+    # Train the model and get the history in order to visualize the loss (as seen in the course)
+    history_object = model.fit_generator(train_generator, 
+        validation_data = validation_generator,
+        steps_per_epoch = len(train_samples), 
+        verbose = 1,
+        epochs = N_EPOCHS,
+        validation_steps = len(validation_samples),     
+    )
+
+    # Plot training and validation loss for each epoch
+    plt.plot(history_object.history['loss'])
+    plt.plot(history_object.history['val_loss'])
+    plt.title('model mean squared error loss')
+    plt.ylabel('mean squared error loss')
+    plt.xlabel('epoch')
+    plt.legend(['Training set', 'Validation set'], loc='upper right')
+    plt.show()
+
+    print('Training Loss')
+    print(history_object.history['loss'])
+    print('Validation Loss')
+    print(history_object.history['val_loss'])
+
+    # Save the model
+    model.save('model.h5')
