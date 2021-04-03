@@ -1,5 +1,7 @@
 import pandas as pd
+import numpy as np
 import sklearn
+from sklearn.model_selection import train_test_split
 import cv2
 from keras.models import Sequential, Model
 from keras.layers import Flatten, Dense, Lambda, Conv2D, Cropping2D
@@ -108,12 +110,13 @@ if __name__ == '__main__':
     model.compile(loss = 'mse', optimizer = 'adam')
 
     # Train the model and get the history in order to visualize the loss (as seen in the course)
+    # Modified after reading https://knowledge.udacity.com/questions/14296
     history_object = model.fit_generator(train_generator, 
-        validation_data = validation_generator,
-        steps_per_epoch = len(train_samples), 
+        validation_data = validation_generator,          
+        steps_per_epoch = np.ceil( len(train_samples) / BATCH_SIZE), 
         verbose = 1,
         epochs = N_EPOCHS,
-        validation_steps = len(validation_samples),     
+        validation_steps = np.ceil( len(validation_samples) / BATCH_SIZE)     
     )
 
     # Plot training and validation loss for each epoch
@@ -130,5 +133,6 @@ if __name__ == '__main__':
     print('Validation Loss')
     print(history_object.history['val_loss'])
 
+    
     # Save the model
     model.save('model.h5')
