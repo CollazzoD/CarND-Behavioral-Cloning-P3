@@ -8,18 +8,37 @@ from keras.layers import Flatten, Dense, Lambda, Conv2D, Cropping2D
 from keras.layers.pooling import MaxPooling2D
 import matplotlib.pyplot as plt
 
+CSV_FILENAME = 'driving_log.csv'
+STEERING_CORRECTION = 0.2
+LOG_COLUMNS = ['center', 'left', 'right', 'steering', 'throttle', 'brake', 'speed', 'left_steering', 'right_steering']
+BATCH_SIZE = 32
+N_EPOCHS = 3
+
+# Search for all the file 'driving_log.csv' inside a given root folder
+def find_all_driving_log(search_root):
+    global CSV_FILENAME
+    logs_path = []
+    for root, dirs, files in os.walk(search_root):
+        for file in files:
+            if file == CSV_FILENAME:
+                logs_path.append(root)
+    return logs_path
+
 # This function opens the csv file containing images path and steerings,
 # applies correction for left and right images steerings and return a list
 # of couples {image, steering} where image is the image's path and steering
 # the corresponding steering value
-def get_images_and_steerings():
-    DATA_FILEPATH = './data'
-    CSV_FILENAME = 'driving_log.csv'
-    STEERING_CORRECTION = 0.2
-    df_img = pd.read_csv(DATA_FILEPATH + '/' + CSV_FILENAME)
-    df_img['center'] = DATA_FILEPATH + '/' + df_img['center'].str.strip()
-    df_img['left'] = DATA_FILEPATH + '/' + df_img['left'].str.strip()
-    df_img['right'] = DATA_FILEPATH + '/' + df_img['right'].str.strip()
+def get_images_and_steerings(data_filepath, columns = None):
+    global CSV_FILENAME, STEERING_CORRECTION, LOG_COLUMNS
+    # Read 'driving_log.csv'
+    if columns:
+        df_img = pd.read_csv(data_filepath + '/' + CSV_FILENAME, names = LOG_COLUMNS)
+    else:
+        df_img = pd.read_csv(data_filepath + '/' + CSV_FILENAME)
+        
+    df_img['center'] = data_filepath + '/IMG/' + df_img['center'].str.split('/').str[-1].str.strip()
+    df_img['left'] = data_filepath + '/IMG/' + df_img['left'].str.split('/').str[-1].str.strip()
+    df_img['right'] = data_filepath + '/IMG/' + df_img['right'].str.split('/').str[-1].str.strip()
     df_img['left_steering'] = df_img['steering'] + STEERING_CORRECTION
     df_img['right_steering'] = df_img['steering'] - STEERING_CORRECTION
 
@@ -83,11 +102,15 @@ def generator(samples, batch_size = 32):
             yield sklearn.utils.shuffle(X_train, y_train)
 
 if __name__ == '__main__':
-    # Define some constant
-    BATCH_SIZE = 32
-    N_EPOCHS = 3
+	global LOG_COLUMNS
+	
+	# Get images from course's dataset 
+    samples = get_images_and_steerings('./data')
 
-    samples = get_images_and_steerings()
+	# Search for recorded datasets
+	for log_path in find_all_driving_log('CHANGE THIS TO ROOT PATH'):
+		s = get_images_and_steerings(log_path, columns = LOG_COLUMNS)
+		samples.extend(s)
 
     print("Number of images (center + left + right) ", len(samples))
     print("Number of images used to train the network (center + left + right) * 2 (flipping)", len(samples) * 2)
