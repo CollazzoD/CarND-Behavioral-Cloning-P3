@@ -7,6 +7,7 @@ from keras.models import Sequential, Model
 from keras.layers import Flatten, Dense, Lambda, Conv2D, Cropping2D
 from keras.layers.pooling import MaxPooling2D
 import matplotlib.pyplot as plt
+import os
 
 CSV_FILENAME = 'driving_log.csv'
 STEERING_CORRECTION = 0.2
@@ -102,15 +103,15 @@ def generator(samples, batch_size = 32):
             yield sklearn.utils.shuffle(X_train, y_train)
 
 if __name__ == '__main__':
-	global LOG_COLUMNS
-	
-	# Get images from course's dataset 
+    global LOG_COLUMNS
+    
+    # Get images from course's dataset 
     samples = get_images_and_steerings('./data')
 
-	# Search for recorded datasets
-	for log_path in find_all_driving_log('CHANGE THIS TO ROOT PATH'):
-		s = get_images_and_steerings(log_path, columns = LOG_COLUMNS)
-		samples.extend(s)
+    # Search for recorded datasets
+    for log_path in find_all_driving_log('../rec'):
+        s = get_images_and_steerings(log_path, columns = LOG_COLUMNS)
+        samples.extend(s)
 
     print("Number of images (center + left + right) ", len(samples))
     print("Number of images used to train the network (center + left + right) * 2 (flipping)", len(samples) * 2)
