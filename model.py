@@ -9,19 +9,12 @@ from keras.layers.pooling import MaxPooling2D
 import matplotlib.pyplot as plt
 import os
 
-CSV_FILENAME = 'driving_log.csv'
-STEERING_CORRECTION = 0.2
-LOG_COLUMNS = ['center', 'left', 'right', 'steering', 'throttle', 'brake', 'speed', 'left_steering', 'right_steering']
-BATCH_SIZE = 32
-N_EPOCHS = 3
-
 # Search for all the file 'driving_log.csv' inside a given root folder
-def find_all_driving_log(search_root):
-    global CSV_FILENAME
+def find_all_driving_log(search_root, csv_filename):
     logs_path = []
     for root, dirs, files in os.walk(search_root):
         for file in files:
-            if file == CSV_FILENAME:
+            if file == csv_filename:
                 logs_path.append(root)
     return logs_path
 
@@ -29,19 +22,18 @@ def find_all_driving_log(search_root):
 # applies correction for left and right images steerings and return a list
 # of couples {image, steering} where image is the image's path and steering
 # the corresponding steering value
-def get_images_and_steerings(data_filepath, columns = None):
-    global CSV_FILENAME, STEERING_CORRECTION, LOG_COLUMNS
+def get_images_and_steerings(data_filepath, csv_filename, steering_correction, columns = None):
     # Read 'driving_log.csv'
     if columns:
-        df_img = pd.read_csv(data_filepath + '/' + CSV_FILENAME, names = LOG_COLUMNS)
+        df_img = pd.read_csv(data_filepath + '/' + csv_filename, names = columns)
     else:
-        df_img = pd.read_csv(data_filepath + '/' + CSV_FILENAME)
+        df_img = pd.read_csv(data_filepath + '/' + csv_filename)
         
     df_img['center'] = data_filepath + '/IMG/' + df_img['center'].str.split('/').str[-1].str.strip()
     df_img['left'] = data_filepath + '/IMG/' + df_img['left'].str.split('/').str[-1].str.strip()
     df_img['right'] = data_filepath + '/IMG/' + df_img['right'].str.split('/').str[-1].str.strip()
-    df_img['left_steering'] = df_img['steering'] + STEERING_CORRECTION
-    df_img['right_steering'] = df_img['steering'] - STEERING_CORRECTION
+    df_img['left_steering'] = df_img['steering'] + steering_correction
+    df_img['right_steering'] = df_img['steering'] - steering_correction
 
     samples = []
     center_samples = df_img[['center', 'steering']].rename(columns = {'center':'image'}).to_dict('records')
@@ -102,14 +94,19 @@ def generator(samples, batch_size = 32):
             y_train = np.array(steerings)
             yield sklearn.utils.shuffle(X_train, y_train)
 
-if __name__ == '__main__':
-    global LOG_COLUMNS
-    
+if __name__ == '__main__':   
+	# Define some constants
+	CSV_FILENAME = 'driving_log.csv'
+	STEERING_CORRECTION = 0.2
+	LOG_COLUMNS = ['center', 'left', 'right', 'steering', 'throttle', 'brake', 'speed', 'left_steering', 'right_steering']
+	BATCH_SIZE = 32
+	N_EPOCHS = 3
+	
     # Get images from course's dataset 
     samples = get_images_and_steerings('./data')
 
     # Search for recorded datasets
-    for log_path in find_all_driving_log('../rec'):
+    for log_path in find_all_driving_log('../rec', CSV_FILENAME):
         s = get_images_and_steerings(log_path, columns = LOG_COLUMNS)
         samples.extend(s)
 
