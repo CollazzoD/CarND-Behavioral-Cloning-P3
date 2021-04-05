@@ -104,11 +104,11 @@ if __name__ == '__main__':
     N_EPOCHS = 3
 
     # Get images from course's dataset 
-    samples = get_images_and_steerings('./data')
+    samples = get_images_and_steerings('./data', CSV_FILENAME, STEERING_CORRECTION)
 
     # Search for recorded datasets
     for log_path in find_all_driving_log('../rec', CSV_FILENAME):
-        s = get_images_and_steerings(log_path, columns = LOG_COLUMNS)
+        s = get_images_and_steerings(log_path, CSV_FILENAME, STEERING_CORRECTION, columns = LOG_COLUMNS)
         samples.extend(s)
 
     print("Number of images (center + left + right) ", len(samples))
