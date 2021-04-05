@@ -63,7 +63,7 @@ def NVIDIA_Model():
     model.add(Conv2D(64, (3, 3), activation="relu"))
     model.add(Flatten())
     model.add(Dense(100))
-	model.add(Dropout(0.2))
+    model.add(Dropout(0.2))
     model.add(Dense(50))
     model.add(Dense(10))
     model.add(Dense(1))
@@ -96,13 +96,13 @@ def generator(samples, batch_size = 32):
             yield sklearn.utils.shuffle(X_train, y_train)
 
 if __name__ == '__main__':   
-	# Define some constants
-	CSV_FILENAME = 'driving_log.csv'
-	STEERING_CORRECTION = 0.2
-	LOG_COLUMNS = ['center', 'left', 'right', 'steering', 'throttle', 'brake', 'speed', 'left_steering', 'right_steering']
-	BATCH_SIZE = 32
-	N_EPOCHS = 3
-	
+    # Define some constants
+    CSV_FILENAME = 'driving_log.csv'
+    STEERING_CORRECTION = 0.2
+    LOG_COLUMNS = ['center', 'left', 'right', 'steering', 'throttle', 'brake', 'speed', 'left_steering', 'right_steering']
+    BATCH_SIZE = 32
+    N_EPOCHS = 3
+
     # Get images from course's dataset 
     samples = get_images_and_steerings('./data')
 
