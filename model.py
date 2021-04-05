@@ -103,7 +103,7 @@ if __name__ == '__main__':
     STEERING_CORRECTION = 0.2
     LOG_COLUMNS = ['center', 'left', 'right', 'steering', 'throttle', 'brake', 'speed', 'left_steering', 'right_steering']
     BATCH_SIZE = 32
-    N_EPOCHS = 3
+    N_EPOCHS = 5
 
     # Get images from course's dataset 
     samples = get_images_and_steerings('./data', CSV_FILENAME, STEERING_CORRECTION)
