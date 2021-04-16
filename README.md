@@ -2,24 +2,23 @@
 
 [![Udacity - Self-Driving Car NanoDegree](https://s3.amazonaws.com/udacity-sdc/github/shield-carnd.svg)](http://www.udacity.com/drive)
 
-Overview
+Introduction
 ---
-This repository contains starting files for the Behavioral Cloning Project.
+The goal of this project is to build a ML model to simulate a car to run in autonomous mode using a [simulator](https://github.com/udacity/self-driving-car-sim) provided by Udacity. 
 
-In this project, you will use what you've learned about deep neural networks and convolutional neural networks to clone driving behavior. You will train, validate and test a model using Keras. The model will output a steering angle to an autonomous vehicle.
+I used what I have learned about deep neural networks and convolutional neural networks to clone driving behavior. The framework used to train, validate and test the model is Keras. The model will output a steering angle to an autonomous vehicle.
 
-We have provided a simulator where you can steer a car around a track for data collection. You'll use image data and steering angles to train a neural network and then use this model to drive the car autonomously around the track.
-
-We also want you to create a detailed writeup of the project. Check out the [writeup template](https://github.com/udacity/CarND-Behavioral-Cloning-P3/blob/master/writeup_template.md) for this project and use it as a starting point for creating your own writeup. The writeup can be either a markdown file or a pdf document.
+The provided simulator was also used for data collection, in order to improve the behavior of the car.
 
 To meet specifications, the project will require submitting five files: 
-* model.py (script used to create and train the model)
+* [model.py](model.py) (script used to create and train the model)
 * drive.py (script to drive the car - feel free to modify this file)
 * model.h5 (a trained Keras model)
 * a report writeup file (either markdown or pdf)
 * video.mp4 (a video recording of your vehicle driving autonomously around the track for at least one full lap)
 
-This README file describes how to output the video in the "Details About Files In This Directory" section.
+Overview
+---
 
 Creating a Great Writeup
 ---
