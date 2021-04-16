@@ -114,14 +114,16 @@ if __name__ == '__main__':
         samples.extend(s)
 
     print("Number of images (center + left + right) ", len(samples))
-    print("Number of images used to train the network (center + left + right) * 2 (flipping)", len(samples) * 2)
+    print("Total number of images (center + left + right) * 2 (flipping)", len(samples) * 2)
 
     # Split all samples in train and validation sets
     train_samples, validation_samples = train_test_split(samples, test_size = 0.2)
 
     print("Number of train samples ", len(train_samples))
+    print("Total number of train samples (each loop in the generator gives 2 images)", len(train_samples) * 2)
     print("Number of validation samples ", len(validation_samples))
-
+    print("Total number of validation samples (each loop in the generator gives 2 images)", len(validation_samples) * 2)
+    
     # Define the train generator and the validation generator in order to
     # ease memory occupation
     train_generator = generator(train_samples, batch_size = BATCH_SIZE)
